@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+
+_author="Shusheng Shao"
+_email="iblackangel@163.com"
+
+_package_name="$(basename $PWD)"
+_package_version="1.0"
+_package_bug_report_email=${_email}
+
+_pwd="$(pwd)"
+as_me="$(basename $0)"
+
+makefile_am="Makefile.am"
+configure_ac="configure.ac"
+configure_scan="configure.scan"
+as_nl='
+'
+export as_nl
+

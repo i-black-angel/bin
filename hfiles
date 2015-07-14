@@ -1,0 +1,2 @@
+#!/bin/bash
+find . \( -iname "*.h" -o -iname "*.hpp" \) -print 2>/dev/null | sed 's|\./||g' > /tmp/hfiles

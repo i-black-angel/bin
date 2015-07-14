@@ -1,0 +1,2 @@
+#!/bin/bash
+curl 'http://www.weather.com.cn/data/cityinfo/101280101.html'

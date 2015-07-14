@@ -1,0 +1,3 @@
+#!/bin/bash
+find . -iname "*.cpp" -print 2>/dev/null | sed 's|\./||g' > /tmp/cppfiles
+

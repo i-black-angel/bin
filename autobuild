@@ -1,0 +1,133 @@
+#!/bin/bash
+
+set -e
+
+_author="Shusheng Shao"
+_email="iblackangel@163.com"
+
+_package_name="$(basename $PWD)"
+_package_version="1.0"
+_package_bug_report_email=${_email}
+
+_pwd="$(pwd)"
+as_me="$(basename $0)"
+
+makefile_am="Makefile.am"
+configure_ac="configure.ac"
+configure_scan="configure.scan"
+as_nl='
+'
+export as_nl
+
+content="\
+bin_PROGRAMS = $_package_name
+# cflags
+${_package_name_}
+${_package_name}_SOURCES = \\"
+
+as_fn_set_status () {
+    return $1
+}
+
+as_fn_exit () {
+    set +e
+    as_fn_set_status $1
+    exit $1
+}
+
+as_fn_error () {
+    as_status=$1; test $as_status -eq 0 && as_status=1
+    echo "$as_me: error: $2" >&2
+    as_fn_exit $as_status
+}
+
+# scan_cpp_file
+scan_cpp_file () {
+    find . -name "*.cpp" -print			\
+    | sed 's|\./||'				\
+    | sed '1,$s|cpp$|cpp    \\|'		\
+    | sed '$s/\\$//'
+}
+
+# Main body of script.
+usage="\
+Usage: `basename $0` [OPTION]...
+
+Generate configure.ac and Makefile.am files, then auto configure it.
+
+Operation modes:
+  -h, --help        print this help, then exit
+  -V, --version     print version number, then exit
+"
+
+help="\
+Try \`$as_me --help' for more information."
+
+version="\
+autobuild (Blackangel) 1.0
+Copyright (C) 2015 $_author <${_email}>"
+
+while test $# -gt 0 ; do
+    option=`expr "x$1" : 'x\(--[^=]*\)' \| \
+                 "x$1" : 'x\(-.\)'`
+    optarg=`expr "x$1" : 'x--[^=]*=\(.*\)' \| \
+                 "x$1" : 'x-.\(.*\)'`
+    case $1 in
+	--version | -V )
+	    echo "$version" ; exit ;;
+	--help | -h )
+	    echo "$usage" ; exit ;;
+	-- )  # Stop option processing
+	    shift ; break ;;
+	- ) # Use stdin as input
+	    break ;;
+	-* )
+	    exec >&2
+	    as_fn_error $? "invalid option \`$1'$as_nl$help" ;;
+	* )
+	    break ;;
+    esac
+done
+
+build_src_dir_makefile_am() {
+    if [ -f $makefile_am ]; then
+	touch $makefile_am
+    fi
+    echo "$content" > $makefile_am
+    scan_cpp_file >> $makefile_am
+    echo $as_nl >> $makefile_am
+
+    
+}
+
+top_dir_content="\
+SUBDIRS = src"
+
+build_top_dir_makefile_am() {
+    if [ -f $makefile_am ]; then
+	touch $makefile_am
+    fi
+    echo "$top_dir_content" > $makefile_am
+}
+
+# Entering src directory, and touch Makefile.am
+if [ -d $_pwd/src ]; then
+    cd $_pwd/src
+    build_src_dir_makefile_am
+    cd - >/dev/null
+else
+    { echo "There is no \`src' directory." ; exit 1; }
+fi
+
+build_top_dir_makefile_am
+
+autoscan
+sed -i "s/FULL-PACKAGE-NAME/${_package_name}/" $configure_scan
+sed -i "s/VERSION/${_package_version}/" $configure_scan
+sed -i "s/BUG-REPORT-ADDRESS/${_package_bug_report_email}/" $configure_scan
+sed -i "/AC_CONFIG_HEADERS/a AM_INIT_AUTOMAKE([-Wall -Werror foreign])" \
+$configure_scan
+mv $configure_scan $configure_ac
+
+# if anything is ok, then using `autoreconf -if' command build `configure' file
+[ $? -eq 0 ] && autoreconf -if

@@ -1,0 +1,73 @@
+#!/bin/bash
+# Copyright (C) 2014 Shusheng Shaw <bluebird.shao@gmail.com>
+#
+# This shell script is developed to display system information.
+# 
+# @date: 17 March 2014
+version="\
+sysinfo.sh v1.2.3
+Copyright (C) 2014 Shusheng Shaw <bluebird.shao@gmail.com>"
+
+usage="\
+Usage: $(basename $0) [OPTION]
+
+Display current system information in simple text format.
+
+Options:
+  -h, --help         print this help, then exit
+  -V, --version      print version number, then exit
+"
+
+help="\
+Try \`$(basename $0) --help' for more information."
+
+if [ $# -gt 0 ]; then
+    case $1 in
+	--version | -V )
+	    echo "$version" ; exit 0 ;;
+	--help | -h )
+	    echo "$usage" ; exit 0 ;;
+	* )
+	    echo "$help" ; exit 1 ;;
+    esac
+fi
+
+echo "$version"
+echo "-----------------------"
+echo "CPU INFO"
+echo "-----------------------"
+cat /proc/cpuinfo | grep '^model name'
+
+echo ""
+echo "----------------------------"
+echo "MEM INFO (MB)"
+echo "----------------------------"
+free -m
+
+if [ $(id -u) -eq 0 ]; then
+    echo ""
+    echo "----------------------------"
+    echo "DISK INFO"
+    echo "----------------------------"
+    fdisk -l | grep '^Disk /dev'
+fi
+
+echo ""
+echo "-----------------------------"
+echo "DISK FREE INFO"
+echo "-----------------------------"
+df -h
+
+LSB_RELEASE=/usr/bin/lsb_release
+echo ""
+echo "-----------------------------"
+echo "LSB_RELEASE"
+echo "-----------------------------"
+[ -x ${LSB_RELEASE} ] && $LSB_RELEASE -a || \
+    { echo "${LSB_RELEASE} does not exist."; exit 1; }
+
+echo ""
+echo "-----------------------------"
+echo "HOSTNAME"
+echo "-----------------------------"
+echo "Hostname: $(hostname)"
