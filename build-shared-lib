@@ -6,6 +6,7 @@ _author="Shusheng Shao"
 _email="iblackangel@163.com"
 
 _package_name="$(basename $PWD)"
+_name=$(echo ${_package_name} | sed 's/lib//')
 _package_version="1.0"
 _package_bug_report_email=${_email}
 
@@ -20,8 +21,9 @@ as_nl='
 export as_nl
 
 _lt_package_name="${_package_name}_la"
+_pkconfig_in="${_package_name}.pc.in"
 
-build_content="\
+content="\
 lib_LTLIBRARIES = ${_package_name}.la
 
 # library version
@@ -32,7 +34,25 @@ ${_lt_package_name}_LDFLAGS=\$(LTLDFLAGS)
 # ${_lt_package_name}_CXXFLAGS = \$(LIBICONV_CFLAGS)
 # ${_lt_package_name}_LIBADD = \$(LIBICONV_LIBS)
 
-${_package_name}_la_SOURCES = \\"
+${_lt_package_name}_SOURCES = \\"
+
+header_content="\
+include_HEADERS = \\"
+
+top_dir_content="\
+SUBDIRS = src"
+
+pc_in_content="\
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: ${_package_name}
+Description: C API for ${_package_name}
+Version: @VERSION@
+Libs: -L\${libdir} -l${_name}
+Cflags: -I\${includedir}"
 
 # scan cpp files
 scan_cpp_file () {
@@ -49,3 +69,108 @@ scan_hpp_file () {
     | sed '1,$s|h$|&    \\|'			\
     | sed '$s/\\$//'
 }
+
+as_fn_set_status () {
+    return $1
+}
+
+as_fn_exit () {
+    set +e
+    as_fn_set_status $1
+    exit $1
+}
+
+as_fn_error () {
+    as_status=$1; test $as_status -eq 0 && as_status=1
+    echo "$as_me: error: $2" >&2
+    as_fn_exit $as_status
+}
+
+#########################################################
+#
+# Main body of script.
+#
+#########################################################
+usage="\
+Usage: `basename $0` [OPTION]...
+
+Generate configure.ac and Makefile.am files, then auto configure it.
+
+Operation modes:
+  -h, --help        print this help, then exit
+  -V, --version     print version number, then exit
+"
+
+help="\
+Try \`$as_me --help' for more information."
+
+version="\
+autobuild (Blackangel) 1.0
+Copyright (C) 2015 $_author <${_email}>"
+
+while test $# -gt 0 ; do
+    option=`expr "x$1" : 'x\(--[^=]*\)' \| \
+                 "x$1" : 'x\(-.\)'`
+    optarg=`expr "x$1" : 'x--[^=]*=\(.*\)' \| \
+                 "x$1" : 'x-.\(.*\)'`
+    case $1 in
+	--version | -V )
+	    echo "$version" ; exit ;;
+	--help | -h )
+	    echo "$usage" ; exit ;;
+	-- )  # Stop option processing
+	    shift ; break ;;
+	- ) # Use stdin as input
+	    break ;;
+	-* )
+	    exec >&2
+	    as_fn_error $? "invalid option \`$1'$as_nl$help" ;;
+	* )
+	    break ;;
+    esac
+done
+
+build_src_dir_makefile_am() {
+    echo "$content" > $makefile_am
+    scan_cpp_file >> $makefile_am
+
+    header_files_count=$(find . -name "*.h" | wc -l)
+    if [ $header_files_count -gt 0 ]; then
+	echo "$as_nl$header_content" >> $makefile_am
+	scan_hpp_file >> $makefile_am
+    fi
+}
+
+build_header_makefile_am() {
+    if [ $(find . -name "*.h" | wc -l) -gt 0 ]; then
+	echo "$header_content" > $makefile_am
+	scan_hpp_file >> $makefile_am
+    fi
+}
+
+build_top_dir_makefile_am() {
+    echo "$top_dir_content" > $makefile_am
+    if [ -d $_pwd/include ]; then
+	sed -i "s/${top_dir_content}/& include/" $makefile_am
+    fi
+}
+
+build_pkconfig() {
+    echo "${pc_in_content}" > $_pkconfig_in
+}
+
+if [ -d $_pwd/src ];then
+    cd $_pwd/src
+    build_src_dir_makefile_am
+else
+    { echo "There is no \`src' direcoty." ; exit 1; }
+fi
+
+if [ -d $_pwd/include ]; then
+    cd $_pwd/include
+    build_header_makefile_am
+fi
+
+cd $_pwd
+build_top_dir_makefile_am
+build_pkconfig

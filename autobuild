@@ -96,14 +96,9 @@ while test $# -gt 0 ; do
 done
 
 build_src_dir_makefile_am() {
-    if [ -f $makefile_am ]; then
-	touch $makefile_am
-    fi
     echo "$content" > $makefile_am
     scan_cpp_file >> $makefile_am
-    echo $as_nl >> $makefile_am
-
-    
+    echo $as_nl >> $makefile_am    
 }
 
 top_dir_content="\
@@ -113,9 +108,6 @@ SUBDIRS = src
 # sysconf_DATA=xxx.ini"
 
 build_top_dir_makefile_am() {
-    if [ -f $makefile_am ]; then
-	touch $makefile_am
-    fi
     echo "$top_dir_content" > $makefile_am
 }
 
@@ -123,12 +115,12 @@ build_top_dir_makefile_am() {
 if [ -d $_pwd/src ]; then
     cd $_pwd/src
     build_src_dir_makefile_am
-    cd - >/dev/null
+    cd $_pwd
 else
     { echo "There is no \`src' directory." ; exit 1; }
 fi
 
-build_top_dir_makefile_am
+cd $_pwd ; build_top_dir_makefile_am
 
 autoscan
 sed -i "s/FULL-PACKAGE-NAME/${_package_name}/" $configure_scan
