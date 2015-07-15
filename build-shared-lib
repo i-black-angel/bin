@@ -5,9 +5,13 @@ set -e
 _author="Shusheng Shao"
 _email="iblackangel@163.com"
 
+lt_current="1"
+lt_revision="0"
+lt_age="0"
+
 _package_name="$(basename $PWD)"
 _name=$(echo ${_package_name} | sed 's/lib//')
-_package_version="1.0"
+_package_version="${lt_current}.${lt_revision}.${lt_age}"
 _package_bug_report_email=${_email}
 
 _pwd="$(pwd)"
@@ -21,7 +25,8 @@ as_nl='
 export as_nl
 
 _lt_package_name="${_package_name}_la"
-_pkconfig_in="${_package_name}.pc.in"
+_pkgconfig="${_package_name}.pc"
+_pkgconfig_in="${_pkgconfig}.in"
 
 content="\
 lib_LTLIBRARIES = ${_package_name}.la
@@ -40,7 +45,12 @@ header_content="\
 include_HEADERS = \\"
 
 top_dir_content="\
-SUBDIRS = src"
+SUBDIRS=src
+ACLOCAL_AMFLAGS=-I m4
+DISTCLEANFILES=${_pkgconfig}
+
+pkgconfigdir=\$(libdir)/pkgconfig
+pkgconfig_DATA=${_pkgconfig}"
 
 pc_in_content="\
 prefix=@prefix@
@@ -151,12 +161,12 @@ build_header_makefile_am() {
 build_top_dir_makefile_am() {
     echo "$top_dir_content" > $makefile_am
     if [ -d $_pwd/include ]; then
-	sed -i "s/${top_dir_content}/& include/" $makefile_am
+	sed -i "1s/src/& include/" $makefile_am
     fi
 }
 
-build_pkconfig() {
-    echo "${pc_in_content}" > $_pkconfig_in
+build_pkgconfig() {
+    echo "${pc_in_content}" > $_pkgconfig_in
 }
 
 if [ -d $_pwd/src ];then
@@ -173,4 +183,25 @@ fi
 
 cd $_pwd
 build_top_dir_makefile_am
-build_pkconfig
+build_pkgconfig
+
+autoscan
+sed -i "s/FULL-PACKAGE-NAME/${_package_name}/" $configure_scan
+sed -i "s/VERSION/${_package_version}/" $configure_scan
+sed -i "s/BUG-REPORT-ADDRESS/${_package_bug_report_email}/" $configure_scan
+sed -i "/AC_CONFIG_HEADERS/a AM_INIT_AUTOMAKE([-Wall -Werror foreign])" \
+$configure_scan
+sed -i "/AC_CONFIG_HEADERS/a AC_CONFIG_MACRO_DIR([m4])" $configure_scan
+sed -i "/AC_PROG_CC/a AM_PROG_AR" $configure_scan
+sed -i "/AM_PROG_AR/a AC_PROG_LIBTOOL" $configure_scan
+
+sed -i "/programs/i lt_current=\"1\"" $configure_scan
+sed -i "/programs/i lt_revision=\"0\"" $configure_scan
+sed -i "/programs/i lt_age=\"0\"" $configure_scan
+sed -i "/programs/i LTLDFLAGS=\"-version-info \${lt_current}:\${lt_revision}:\${lt_age}\"" $configure_scan
+sed -i "/programs/i AC_SUBST(LTLDFLAGS)" $configure_scan
+sed -i "/programs/i \ " $configure_scan
+sed -i "/AC_OUTPUT/i AC_CONFIG_FILES([${_pkgconfig}])" $configure_scan
+mv $configure_scan $configure_ac
+
+[ $? -eq 0 ] && libtoolize --copy --install --force && autoreconf -if
