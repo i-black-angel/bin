@@ -21,8 +21,14 @@ export as_nl
 
 content="\
 bin_PROGRAMS = $_package_name
-# cflags
-${_package_name_}
+
+# c preprocesser
+# AM_CPPFLAGS = -DSYSCONFDIR=\\\"\$(sysconfdir)\\\"
+
+# Cflags and Libs
+# ${_package_name}_CXXFLAGS = \$(LIBHELLO_CFLAGS)
+# ${_package_name}_LDADD = \$(LIBHELLO_LIBS)
+
 ${_package_name}_SOURCES = \\"
 
 as_fn_set_status () {
@@ -101,7 +107,10 @@ build_src_dir_makefile_am() {
 }
 
 top_dir_content="\
-SUBDIRS = src"
+SUBDIRS = src
+
+# configuration files
+# sysconf_DATA=xxx.ini"
 
 build_top_dir_makefile_am() {
     if [ -f $makefile_am ]; then

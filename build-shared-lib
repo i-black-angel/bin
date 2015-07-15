@@ -19,3 +19,33 @@ as_nl='
 '
 export as_nl
 
+_lt_package_name="${_package_name}_la"
+
+build_content="\
+lib_LTLIBRARIES = ${_package_name}.la
+
+# library version
+${_lt_package_name}_LDFLAGS=\$(LTLDFLAGS)
+
+######################################
+# Cflags and Libs
+# ${_lt_package_name}_CXXFLAGS = \$(LIBICONV_CFLAGS)
+# ${_lt_package_name}_LIBADD = \$(LIBICONV_LIBS)
+
+${_package_name}_la_SOURCES = \\"
+
+# scan cpp files
+scan_cpp_file () {
+    find . -name "*.cpp" -print			\
+    | sed 's|\./||'				\
+    | sed '1,$s|cpp$|cpp    \\|'		\
+    | sed '$s/\\$//'
+}
+
+# scan header files
+scan_hpp_file () {
+    find . -name "*.h" -print			\
+    | sed 's|\./||'				\
+    | sed '1,$s|h$|&    \\|'			\
+    | sed '$s/\\$//'
+}
