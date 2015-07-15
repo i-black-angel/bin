@@ -1,0 +1,5 @@
+#!/bin/bash
+
+GAME_PATH=$HOME/game/Warcraft_3
+
+wine "${GAME_PATH}/Warcraft III.exe" -opengl

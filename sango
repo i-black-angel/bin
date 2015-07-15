@@ -1,0 +1,6 @@
+#!/bin/bash
+
+GAME_PATH=$HOME/game/SANGO6
+
+cd ${GAME_PATH}
+wine ${GAME_PATH}/Sango6.exe

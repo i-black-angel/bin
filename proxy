@@ -1,0 +1,2 @@
+#!/bin/sh
+python ~/downloads/goagent-2.1.5/local/proxy.py

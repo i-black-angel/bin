@@ -1,0 +1,38 @@
+#!/bin/bash
+
+#----------------
+# umount if is dir
+if [ -d "$1" ]; then
+    inner_dir_name=`echo "$1" | awk -F '/' '{print $(NF-1)}'` 
+    if [ -n "$inner_dir_name" ] && [ -d "/mnt/$inner_dir_name" ]; then
+        umount "/mnt/$inner_dir_name"
+        rm -r "/mnt/$inner_dir_name"
+    else
+        echo "Usage: $1 is not supported by this shell."
+        exit 1
+    fi
+else 
+#----------------
+# type
+if [ $# -lt 1 ]; then 
+    echo "Usage: unmount device | directory"
+    exit 1
+fi
+file_type=`file "$1"`
+if [ "$file_type" != "$1: block special" ]; then
+    echo "$1 is not block special."
+    exit 1
+fi
+
+block_info=`blkid "$1"`
+if [ -z "$block_info" ]; then
+    echo "Can not get block id from: $1"
+    exit 1
+fi
+
+dir_name=`blkid "$1" | awk -F '"' '{print $2}'`
+if [ -n "$dir_name" ] && [ -d "/mnt/$dir_name" ]; then
+    umount "/mnt/$dir_name"
+    rm -r "/mnt/$dir_name"
+fi
+fi
