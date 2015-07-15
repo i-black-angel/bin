@@ -1,0 +1,77 @@
+#!/bin/sh
+
+# svnserve init script:
+# Copyright 2015 Blackangel <iblackangel@163.com>
+#
+# This is free software; you may redistribute it and/or modify
+# it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2,
+# or (at your option) any later version.
+#
+# This is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License with
+# the Debian operating system, in /usr/share/common-licenses/GPL;  if
+# not, write to the Free Software Foundation, Inc., 51 Franklin Street, 
+# Fifth Floor, Boston, MA 02110-1301, USA.
+
+### BEGIN INIT INFO
+# Provides:          svnserve
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start svnserve
+### END INIT INFO
+ 
+NAME=svnserve
+PIDFILE=/var/run/svnserv.pid
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+DAEMON=/usr/bin/$NAME
+REPOS=/opt/repos
+SCRIPT=/etc/init.d/$NAME
+
+# Exit if the package is not installed
+test -x $DAEMON || exit 0
+# Exit if the directory is not exist
+test -d $REPOS || exit 0
+
+# Define LSB log_* functions.
+# Depend on lsb-base (>= 3.2-14) to ensure that this file is present
+# and status_of_proc is working.
+. /lib/lsb/init-functions
+
+case "$1" in
+    start)
+	log_daemon_msg "Starting $NAME" "$NAME"
+	start-stop-daemon --start --quiet --pidfile $PIDFILE --name $NAME --exec $DAEMON -- -d -r $REPOS --pid-file=$PIDFILE
+	status=$?
+	log_end_msg $status
+	if [ $status != 0 ]; then
+	    log_daemon_msg "already running"
+	fi
+	;;
+    restart)
+	[ -f $PIDFILE ] && $SCRIPT stop
+	$SCRIPT start
+	;;
+    stop)
+	log_daemon_msg "Stopping $NAME" "$NAME"
+	start-stop-daemon --stop --quiet --pidfile $PIDFILE --name $NAME
+	status=$?
+	log_end_msg $status
+	if [ $status != 0 ]; then
+	    log_daemon_msg "not running"
+	fi
+	;;
+    force-reload)
+	$SCRIPT restart
+	;;
+    *)
+	echo "Usage: $SCRIPT {start|stop|restart|force-reload}" >&2
+	exit 3
+	;;
+esac
+
+exit 0
