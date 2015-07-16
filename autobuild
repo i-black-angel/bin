@@ -47,8 +47,8 @@ bin_PROGRAMS = $_package_name
 # AM_CPPFLAGS = -DSYSCONFDIR=\\\"\$(sysconfdir)\\\"
 
 # Cflags and Libs
-# ${_package_name}_CXXFLAGS = \$(LIBHELLO_CFLAGS)
-# ${_package_name}_LDADD = \$(LIBHELLO_LIBS)
+# ${_package_name}_CXXFLAGS = \$(HELLO_CFLAGS)
+# ${_package_name}_LDADD = \$(HELLO_LIBS)
 
 ${_package_name}_SOURCES = \\"
 
@@ -149,6 +149,11 @@ sed -i "s/VERSION/${_package_version}/" $configure_scan
 sed -i "s/BUG-REPORT-ADDRESS/${_package_bug_report_email}/" $configure_scan
 sed -i "/AC_CONFIG_HEADERS/a AM_INIT_AUTOMAKE([-Wall -Werror foreign])" \
 $configure_scan
+sed -i "/AC_CONFIG_FILES/i # Add bellow content if you need to link with another library" $configure_scan
+sed -i "/AC_CONFIG_FILES/i # PKG_CHECK_MODULES([HELLO], [libhello >= 1.0])" \
+$configure_scan
+sed -i "/AC_CONFIG_FILES/i \ " $configure_scan
+
 mv $configure_scan $configure_ac
 
 # if anything is ok, then using `autoreconf -if' command build `configure' file
