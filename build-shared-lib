@@ -2,6 +2,30 @@
 
 set -e
 
+DIE=0
+_pwd="$(pwd)"
+as_me="$(basename $0)"
+
+(autoconf --version) < /dev/null > /dev/null 2>&1 || {
+    echo
+    echo "You must have autoconf installed to run $as_me."
+    echo "Download the appropriate package for your distribution,"
+    echo "or see http://www.gnu.org/software/autoconf"
+    DIE=1
+}
+
+(automake --version) < /dev/null > /dev/null 2>&1 || {
+    echo
+    echo "You must have automake installed to run $as_me."
+    echo "Download the appropriate package for your distribution,"
+    echo "or see http://www.gnu.org/software/automake"
+    DIE=1
+}
+
+if [ "$DIE" -eq 1 ]; then
+    exit 1
+fi 
+
 _author="Shusheng Shao"
 _email="iblackangel@163.com"
 
@@ -13,9 +37,6 @@ _package_name="$(basename $PWD)"
 _name=$(echo ${_package_name} | sed 's/lib//')
 _package_version="${lt_current}.${lt_revision}.${lt_age}"
 _package_bug_report_email=${_email}
-
-_pwd="$(pwd)"
-as_me="$(basename $0)"
 
 makefile_am="Makefile.am"
 configure_ac="configure.ac"
