@@ -230,6 +230,8 @@ sed -i "/programs/i lt_age=\"0\"" $configure_scan
 sed -i "/programs/i LTLDFLAGS=\"-version-info \${lt_current}:\${lt_revision}:\${lt_age}\"" $configure_scan
 sed -i "/programs/i AC_SUBST(LTLDFLAGS)" $configure_scan
 sed -i "/programs/i \ " $configure_scan
+sed -i "/libraries/a # PKG_CHECK_MODULES([HELLO], [libhello >= 1.0])" $configure_scan
+sed -i "/libraries/a # Add bellow content if you need to link with another library" $configure_scan
 sed -i "/AC_OUTPUT/i AC_CONFIG_FILES([${_pkgconfig}])" $configure_scan
 mv $configure_scan $configure_ac
 
