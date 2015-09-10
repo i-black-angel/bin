@@ -218,7 +218,7 @@ autoscan
 sed -i "s/FULL-PACKAGE-NAME/${_package_name}/" $configure_scan
 sed -i "s/VERSION/${_package_version}/" $configure_scan
 sed -i "s/BUG-REPORT-ADDRESS/${_package_bug_report_email}/" $configure_scan
-sed -i "/AC_CONFIG_HEADERS/a AM_INIT_AUTOMAKE([-Wall -Werror foreign])" \
+sed -i "/AC_CONFIG_HEADERS/a AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])" \
 $configure_scan
 sed -i "/AC_CONFIG_HEADERS/a AC_CONFIG_MACRO_DIR([m4])" $configure_scan
 sed -i "/AC_PROG_CC/a AM_PROG_AR" $configure_scan
