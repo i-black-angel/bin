@@ -76,6 +76,13 @@ scan_cpp_file () {
     | sed '$s/\\$//'
 }
 
+scan_c_file () {
+    find . -name "*.c" -print			\
+    | sed 's|\./||'				\
+    | sed '1,$s|c$|c        \\|'		\
+    | sed '$s/\\$//'
+}
+
 # Main body of script.
 usage="\
 Usage: `basename $0` [OPTION]...
@@ -119,6 +126,7 @@ done
 build_src_dir_makefile_am() {
     echo "$content" > $makefile_am
     scan_cpp_file >> $makefile_am
+    scan_c_file >> $makefile_am
     echo $as_nl >> $makefile_am    
 }
 

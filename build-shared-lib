@@ -101,6 +101,14 @@ scan_cpp_file () {
     | sed '$s/\\$//'
 }
 
+# scan c files
+scan_c_file () {
+    find . -name "*.c" -print			\
+    | sed 's|\./||'				\
+    | sed '1,$s|c$|c    \\|'			\
+    | sed '$s/\\$//'
+}
+
 # scan header files
 scan_hpp_file () {
     find . -name "*.h" -print			\
@@ -172,7 +180,7 @@ done
 build_src_dir_makefile_am() {
     echo "$content" > $makefile_am
     scan_cpp_file >> $makefile_am
-
+    scan_c_file >> $makefile_am
     header_files_count=$(find . -name "*.h" | wc -l)
     if [ $header_files_count -gt 0 ]; then
 	echo "$as_nl$header_content" >> $makefile_am
