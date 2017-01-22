@@ -30,7 +30,10 @@ _author="Shusheng Shao"
 _email="iblackangel@163.com"
 
 _package_name="$(basename $PWD)"
-_package_version="1.0"
+# covert to Uppercase
+_package_uppercase=$(echo $_package_name | tr '[a-z]' '[A-Z]')
+_package_conf=${_package_name}.conf
+_package_version="1.0.0"
 _package_bug_report_email=${_email}
 
 makefile_am="Makefile.am"
@@ -47,6 +50,8 @@ bin_PROGRAMS = $_package_name
 # AM_CPPFLAGS = -DSYSCONFDIR=\\\"\$(sysconfdir)\\\"
 
 # Cflags and Libs
+${_package_name}_CPPFLAGS = -DSYSCONFDIR=\\\"\$(sysconfdir)\\\"
+${_package_name}_CPPFLAGS += -DLOCALSTATEDIR=\\\"\$(localstatedir)\\\"
 # ${_package_name}_CXXFLAGS = \$(HELLO_CFLAGS)
 # ${_package_name}_LDADD = \$(HELLO_LIBS)
 
@@ -76,11 +81,26 @@ scan_cpp_file () {
     | sed '$s/\\$//'
 }
 
+# scan c files
 scan_c_file () {
     find . -name "*.c" -print			\
     | sed 's|\./||'				\
     | sed '1,$s|c$|c        \\|'		\
     | sed '$s/\\$//'
+}
+
+# scan header files (.h)
+scan_h_file () {
+    find . -name "*.h" -print			\
+    | sed 's|\./||'				\
+    | sed '1,$s|h$|&    \\|'
+}
+
+# scan header files (.hpp)
+scan_hpp_file () {
+    find . -name "*.hpp" -print			\
+    | sed 's|\./||'				\
+    | sed '1,$s|hpp$|&    \\|'
 }
 
 # Main body of script.
@@ -98,7 +118,7 @@ help="\
 Try \`$as_me --help' for more information."
 
 version="\
-autobuild (Blackangel) 1.0
+autobuild (Blackangel) 1.1
 Copyright (C) 2015 $_author <${_email}>"
 
 while test $# -gt 0 ; do
@@ -125,31 +145,248 @@ done
 
 build_src_dir_makefile_am() {
     echo "$content" > $makefile_am
+    scan_h_file >> $makefile_am
+    scan_hpp_file >> $makefile_am
     scan_cpp_file >> $makefile_am
     scan_c_file >> $makefile_am
     echo $as_nl >> $makefile_am    
 }
 
-top_dir_content="\
-SUBDIRS = src
-
-# configuration files
-# sysconf_DATA=xxx.ini"
-
-build_top_dir_makefile_am() {
-    echo "$top_dir_content" > $makefile_am
-}
-
 # Entering src directory, and touch Makefile.am
-if [ -d $_pwd/src ]; then
-    cd $_pwd/src
-    build_src_dir_makefile_am
-    cd $_pwd
-else
-    { echo "There is no \`src' directory." ; exit 1; }
+if [ ! -d $_pwd/src ]; then
+    mkdir -p ${_pwd}/src
+    cat > ${_pwd}/src/main.cpp <<EOF
+#include <iostream>
+
+using namespace std;
+
+int main(int argc, char *argv[])
+{
+    
+    return 0;
+}
+EOF
 fi
 
-cd $_pwd ; build_top_dir_makefile_am
+cd $_pwd/src
+cat > pathnames.h <<EOF
+#ifndef _PATHNAMES_H_
+#define _PATHNAMES_H_
+
+#ifndef SYSCONFDIR
+# define SYSCONFDIR "/etc"
+#endif /* SYSCONFDIR */
+
+#ifndef LOCALSTATEDIR
+# define LOCALSTATEDIR "/var"
+#endif /* LOCALSTATEDIR */
+
+/* define your own path here. */ 
+#define _PATH_CONF_FILE SYSCONFDIR "/${_package_name}.conf"
+#define _PATH_PID_FILE LOCALSTATEDIR  "/run/${_package_name}.pid"
+
+#endif /* _PATHNAMES_H_ */
+EOF
+build_src_dir_makefile_am
+cd $_pwd
+
+# create README, INSTALL, ChangeLog on the top directory
+cat > README <<EOF
+README for ${_package_name}.
+
+COMPILING
+
+If you obtained a binary distribution you don't need to compile ${_package_name}. If 
+you obtained a source distribution, all the stuff for compiling ${_package_name} is
+in the "INSTALL" file. See INSTALL for instructions.
+
+
+MAIN AUTHOR
+
+Send any other comments, patches, flowers and suggestions to:
+
+	${_author}		E-mail:	${_email}
+
+EOF
+
+cat > INSTALL <<EOF
+INSTALL for ${_package_name}.
+Copyright (C) 2017 Guangdong Createw Technology Co.,Ltd.
+All Rights Reserved.
+
+
+BASIC INSTALLATION
+
+    These are generic installation instructions.
+    
+    The \`configure' shell script attempts to guess correct values for
+various system-dependent variables used during compilation.  It uses
+those values to create a \`Makefile' in each directory of the package.
+It may also create one or more \`.h' files containing system-dependent
+definitions.  Finally, it creates a shell script \`config.status' that
+you can run in the future to recreate the current configuration, a file
+\`config.cache' that saves the results of its tests to speed up
+reconfiguring, and a file \`config.log' containing compiler output
+(useful mainly for debugging \`configure').
+
+   If you need to do unusual things to compile the package, please try
+to figure out how \`configure' could check whether to do them, and mail
+diffs or instructions to the address given in the \`README' so they can
+be considered for the next release.  If at some point \`config.cache'
+contains results you don't want to keep, you may remove or edit it.
+
+   The file \`configure.in' is used to create \`configure' by a program
+called \`autoconf'.  You only need \`configure.in' if you want to change
+it or regenerate \`configure' using a newer version of \`autoconf'.
+
+The simplest way to compile this package is:
+
+  1. \`cd' to the directory containing the package's source code and type
+     \`./configure' to configure the package for your system.  If you're
+     using \`csh' on an old version of System V, you might need to type
+     \`sh ./configure' instead to prevent \`csh' from trying to execute
+     \`configure' itself.
+
+     Running \`configure' takes awhile.  While running, it prints some
+     messages telling which features it is checking for.
+
+  2. Type \`make' to compile the package.
+
+  3. Optionally, type \`make check' to run any self-tests that come with
+     the package.
+
+  4. Type \`make install' to install the programs and any data files and
+     documentation.
+
+  5. You can remove the program binaries and object files from the
+     source code directory by typing \`make clean'.  To also remove the
+     files that \`configure' created (so you can compile the package for
+     a different kind of computer), type \`make distclean'.  There is
+     also a \`make maintainer-clean' target, but that is intended mainly
+     for the package's developers.  If you use it, you may have to get
+     all sorts of other programs in order to regenerate files that came
+     with the distribution.
+
+SUMMARY
+
+1. ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var
+2. make                                   
+3. make install-strip
+
+DESTDIR: Support for Staged Installs
+
+3b. make install-strip DESTDIR=/fakeroot  
+
+EOF
+
+cat > ChangeLog <<EOF
+$(date +%F) ${_author} <${_email}>
+        * Version ${_package_version} init build
+        * README init created
+        * INSTALL init created
+EOF
+
+mkdir -p conf m4
+cat > conf/${_package_conf}.in <<EOF
+# ${_package_conf}  Generated from ${_package_conf}.in by configure.
+###############################################################################
+# ${_package_uppercase} - 'brief description of ${_package_name}'
+#
+# Copyright (C) 2017 Guangdong Createw Technology Co.,Ltd.
+# All Rights Reserved.
+#
+# Web Page: http://www.createw.com/
+#
+# This software is maintained by R & D department of Createw.
+# (@VERSION@)
+###############################################################################
+
+[general]
+name=value
+EOF
+
+# -- BUG --
+# if we put '@localstatedir@' instead of '/var', it will be treated as
+# '${prefix}/var', so interested.
+# ----
+# HARD CODE
+cat > conf/${_package_name}.in <<EOF
+/var/log/${_package_name}.log {
+    rotate 4
+    missingok
+    daily
+    compress
+    notifempty
+}
+EOF
+
+cat > conf/Makefile.am <<EOF
+#DISTCLEANFILES=${_package_conf}
+
+# configuration files
+sysconf_DATA=${_package_conf}
+
+# logrotate.d/${_package_name}
+logrotatedir=\$(sysconfdir)/logrotate.d
+logrotate_DATA=${_package_name}
+EOF
+
+mkdir -p init.d
+cat > init.d/${_package_name}.in <<EOF
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          $_package_name
+# Required-Start:    \$local_fs \$remote_fs \$network \$syslog \$named
+# Required-Stop:     \$local_fs \$remote_fs \$network \$syslog \$named
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# X-Interactive:     true
+# Short-Description: Start/stop $_package_name daemon
+# Description:       Start the $_package_name daemon and associated helpers
+### END INIT INFO
+
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+
+do_start() 
+{
+    # you must uncomment the following line in init.d/${_package_name}.in file,
+    # and MODIFY IT to be a daemon process
+    # 
+    #@prefix@/bin/${_package_name}
+}
+
+do_stop()
+{
+    pkill ${_package_name}
+}
+
+case "\$1" in
+    start)
+	do_start
+	;;
+    stop)
+	do_stop
+	;;
+    reload|restart)
+	do_stop
+	do_start
+	;;
+    *)
+	echo "Usage: /etc/init.d/${_package_name} {start|stop|restart|reload}"
+	exit 1
+	;;
+esac
+EOF
+
+cat > init.d/Makefile.am <<EOF
+initdir=\$(sysconfdir)/init.d
+init_SCRIPTS=${_package_name}
+EOF
+
+cat > Makefile.am <<EOF
+SUBDIRS = src conf init.d
+ACLOCAL_AMFLAGS = -I m4
+EOF
 
 autoscan
 sed -i "s/FULL-PACKAGE-NAME/${_package_name}/" $configure_scan
@@ -161,6 +398,9 @@ sed -i "/AC_CONFIG_FILES/i # Add bellow content if you need to link with another
 sed -i "/AC_CONFIG_FILES/i # PKG_CHECK_MODULES([HELLO], [libhello >= 1.0])" \
 $configure_scan
 sed -i "/AC_CONFIG_FILES/i \ " $configure_scan
+sed -i "/AC_OUTPUT/i AC_CONFIG_FILES([conf/${_package_conf}])" $configure_scan
+sed -i "/AC_OUTPUT/i AC_CONFIG_FILES([conf/${_package_name}])" $configure_scan
+sed -i "/AC_OUTPUT/i AC_CONFIG_FILES([init.d/${_package_name}])" $configure_scan
 
 mv $configure_scan $configure_ac
 
