@@ -1,0 +1,4 @@
+#!/bin/bash
+rm -f /home/spider/shared/screenshot/*
+gnome-screenshot -a -f /home/spider/shared/screenshot/$(date +%Y%m%d%H%M%S).png
+
